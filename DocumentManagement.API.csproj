@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include=".github\skills\security-review\SKILL.md.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.15">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include=".github\copilot-instructions.md" />
+    <None Include=".github\plan.md" />
+    <None Include=".github\skills\api-design-review\SKILL.md" />
+    <None Include=".github\skills\code-review\SKILL.md" />
+    <None Include=".github\skills\documentation-review\SKILL.md" />
+    <None Include=".github\skills\efcore-review\SKILL.md" />
+    <None Include=".github\skills\file-storage-review\SKILL.md" />
+    <None Include=".github\skills\final-assessment-review\SKILL.md" />
+    <None Include=".github\skills\performance-review\SKILL.md" />
+    <None Include=".github\skills\security-review\SKILL.md" />
+    <None Include=".github\skills\unit-testing\SKILL.md" />
+  </ItemGroup>
+
+</Project>

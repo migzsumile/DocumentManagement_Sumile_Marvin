@@ -1,0 +1,135 @@
+---
+name: security-review
+description: Review ASP.NET Core APIs for security risks, including secure HTTP headers, rate limiting, file uploads, input validation, path traversal, error handling, and data protection.
+---
+
+# Security Review Skill
+
+## Objective
+Review the ASP.NET Core API for common application-security weaknesses and recommend practical fixes appropriate to the project. Prioritize risks relevant to the implemented features. Do not add unnecessary infrastructure or claim that any single control makes the application completely secure.
+
+## Review approach
+1. Inspect relevant code, configuration, dependencies, and hosting assumptions before making recommendations.
+2. Classify findings as Critical, High, Medium, Low, or Informational.
+3. For each finding, include the affected file/location, evidence, risk, impact, and concrete remediation.
+4. Distinguish confirmed vulnerabilities from potential issues and hardening recommendations.
+5. Do not change code during a review-only task. Make changes only when explicitly requested.
+6. Never log secrets, tokens, document contents, or unnecessary personal data.
+
+## 1. Secure HTTP headers
+Review whether appropriate response headers are configured centrally through ASP.NET Core middleware or hosting configuration.
+
+Check:
+- `X-Content-Type-Options: nosniff`.
+- `Content-Security-Policy` for browser-rendered content. For a JSON-only API, explain whether CSP provides meaningful protection; do not add an arbitrary policy without understanding Swagger UI or other hosted pages.
+- `Strict-Transport-Security` (HSTS) only when the application is served exclusively over HTTPS in the relevant environment. Verify HTTPS deployment and proxy behavior first. Do not enable HSTS for local HTTP development.
+- `Referrer-Policy`, using a restrictive value appropriate to the application, such as `no-referrer`.
+- `X-Frame-Options: DENY` or CSP `frame-ancestors` when browser pages could be framed. Avoid conflicting policies.
+- `Permissions-Policy` to disable browser capabilities the application does not use, where applicable.
+- Suppress technology-disclosing headers such as `Server` and `X-Powered-By` where practical. Do not treat their removal as a primary security control.
+- Production error responses must not disclose stack traces, internal paths, connection strings, or implementation details.
+
+Verify:
+- Headers appear on relevant success and error responses.
+- Reverse proxies, web servers, and hosting platforms do not remove or overwrite intended headers.
+- CORS is configured separately and narrowly for known browser origins; CORS is not authentication.
+- Swagger/OpenAPI exposure is appropriate for each environment.
+- HTTPS redirection and forwarded-header configuration match the deployment topology.
+
+## 2. API rate limiting and abuse protection
+Treat rate limiting as an API security control. Review ASP.NET Core rate-limiting middleware and endpoint policies.
+
+Check:
+- Apply a sensible global baseline and stricter policies to expensive or abuse-prone endpoints, such as uploads.
+- Choose a partition key appropriate to the deployment and threat model. For an unauthenticated assessment API, IP-based partitioning may be a reasonable basic control, but consider NAT, shared networks, IPv6, and trusted reverse proxies.
+- Do not trust arbitrary client-supplied forwarding headers. Process forwarded IP information only from explicitly trusted proxies/networks.
+- Return `429 Too Many Requests` for rejected requests and consider `Retry-After` where supported.
+- Ensure rejected requests do not begin expensive database or file operations.
+- Consider request-body limits, upload concurrency, timeouts, and storage quotas alongside request-count limits.
+- Avoid limits so restrictive that they block normal users behind a shared IP.
+- Understand that in-memory limiters are per application instance and do not provide a shared global limit across multiple instances. For multi-instance deployments, assess a distributed or gateway-level strategy if required.
+- Test allowed requests, requests over the limit, partition isolation, and behavior behind the actual proxy/hosting setup.
+
+Do not invent production traffic thresholds. Recommend starting values only when expected traffic and hosting context are known, and document them as configurable assumptions.
+
+## 3. File upload security
+For document uploads:
+- Enforce the assessment's maximum upload size of 10 MB at the request/server boundary and in application validation.
+- Validate required inputs and reject empty or unsupported files according to documented file-type assumptions.
+- Do not trust the supplied filename, extension, or `Content-Type` as proof of file safety.
+- Generate a server-side storage name or identifier. Preserve the original filename only as metadata and sanitize/encode it when returning it to clients.
+- Never combine an untrusted filename with a storage path.
+- Store files in an application-controlled location that is not directly executable or publicly browsable.
+- Consider extension allowlists and content/signature checks for explicitly supported file types.
+- Avoid archive extraction unless archive-entry path traversal and decompression limits are handled.
+- Handle duplicate names, partial writes, interrupted uploads, and cleanup failures safely.
+- Do not expose physical storage paths in API responses or logs.
+
+## 4. Path traversal and filesystem access
+- Resolve storage paths from a trusted configured root and a server-generated storage identifier.
+- Validate identifiers before using them in storage operations.
+- Ensure normalized resolved paths remain within the configured storage root.
+- Reject path separators, traversal sequences, rooted paths, and unexpected identifier formats.
+- Never use user-controlled input as an unrestricted filesystem path.
+- Test traversal attempts using encoded and platform-specific path forms.
+
+## 5. Input validation and API behavior
+- Validate route IDs, query parameters, form fields, and request models.
+- Apply sensible maximum lengths and reject malformed values.
+- Use DTOs rather than binding database entities directly.
+- Prevent over-posting/mass assignment by accepting only intended fields.
+- Return appropriate status codes, including `400`, `404`, `413`, `415`, `429`, and `500` where applicable.
+- Use consistent Problem Details or another consistent error format.
+- Do not expose exception messages or stack traces to clients in production.
+
+## 6. Database and data protection
+- Prefer EF Core parameterized queries; inspect raw SQL for injection risks.
+- Do not store secrets in source control or committed configuration.
+- Use least-privilege database credentials appropriate to the environment.
+- Avoid returning internal database fields unless needed by the API contract.
+- Review sensitive data in logs and error responses.
+
+## 7. CORS and browser-facing configuration
+- Allow only required origins, methods, and headers.
+- Avoid wildcard origins when credentials are enabled.
+- Do not use CORS as a substitute for authentication or authorization.
+- Confirm whether the API is consumed by browsers, server-to-server clients, or both before recommending browser-specific controls.
+
+## 8. Configuration and environment checks
+- Separate development and production behavior.
+- Disable detailed developer exception pages in production.
+- Confirm HTTPS and proxy configuration.
+- Keep security settings configurable where environment-specific.
+- Check middleware ordering and ensure rate limiting runs before expensive endpoint work.
+- Verify security middleware and headers cover intended routes, including error paths.
+
+## 9. Required security tests
+Add or recommend automated tests for relevant controls:
+- Uploads over 10 MB are rejected.
+- Empty, malformed, and unsupported uploads are rejected.
+- User-supplied filenames cannot escape the storage directory.
+- Generated storage names do not collide under normal operation.
+- Missing files and storage failures do not expose internal paths or exception details.
+- Expected security headers are present on representative responses.
+- Rate-limited requests receive `429` and do not execute endpoint operations.
+- Different limiter partitions are handled independently.
+- CORS allows configured origins and rejects unconfigured origins, if CORS is enabled.
+- Production error responses do not reveal stack traces or secrets.
+
+Use integration tests with `WebApplicationFactory` where practical. Avoid tests that depend on external production infrastructure.
+
+## Expected output
+Return a concise report with:
+1. **Summary** — overall security posture and scope reviewed.
+2. **Findings** — severity, affected file/location, evidence, impact, and remediation.
+3. **Secure headers** — headers reviewed, missing or misconfigured items, and environment assumptions.
+4. **Rate limiting** — policies, partition key, proxy assumptions, and scaling limitations.
+5. **Tests** — existing coverage and recommended or implemented tests.
+6. **Prioritized actions** — fixes ordered by risk.
+
+Clearly label each item as:
+- Confirmed issue
+- Potential issue requiring environment verification
+- Hardening recommendation
+
+Do not claim the API is secure solely because headers, CORS, or rate limiting are configured.
