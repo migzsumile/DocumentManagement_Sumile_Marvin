@@ -29,7 +29,7 @@ Example `appsettings.json`:
 }
 ```
 
-To move where documents are stored, update the `RootPath` value. The directory is created automatically if it does not exist.
+To move where documents are stored, update the `RootPath` value. Ensure the target directory exists and the application process has permission to read and write to it. The directory is created automatically when possible.
 
 ## Supported file types
 
@@ -51,7 +51,7 @@ dotnet restore
 dotnet run
 ```
 
-3. The API will listen on HTTPS by default in development and will redirect HTTP requests to HTTPS.
+3. For this assessment, the application creates the database automatically at startup when the configured SQL Server connection is available via `EnsureCreated()`. The API also redirects HTTP requests to HTTPS in the configured hosting environment.
 
 ## Endpoint reference
 
@@ -96,6 +96,10 @@ The API adds the following secure-response headers to applicable responses:
 
 The project avoids applying a custom CSP to JSON-only API responses.
 
+## Security review note
+
+The security-review agent identified one high-severity issue related to authentication and authorization. However, this is not a requirement for the technical assessment and is outside the scope of the document-management API implementation requested here.
+
 ## Testing
 
 Run the automated tests from the repository root:
@@ -104,7 +108,7 @@ Run the automated tests from the repository root:
 dotnet test DocumentManagement.Test/DocumentManagement.Test.csproj
 ```
 
-The test project uses MSTest and isolates storage and database state per test by using a temporary folder and an in-memory EF Core database.
+The test project uses MSTest and isolates storage state per test by creating a unique temporary folder. The test host configures a LocalDB SQL Server connection string for the API, so the tests do not depend on a developer's live database.
 
 ## AI usage and review
 

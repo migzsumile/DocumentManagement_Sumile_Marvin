@@ -11,10 +11,10 @@ Create or review reliable automated tests for the Document Management API. Use t
 ## Required context
 - Read `plan.md` before adding or changing tests.
 - Inspect the actual target framework, package versions, dependency injection setup, endpoint style, and existing test conventions.
-- The plan proposes xUnit and `WebApplicationFactory` where practical; adapt to the installed SDK and solution rather than assuming versions.
+- The plan proposes MSTest and `WebApplicationFactory` where practical; adapt to the installed SDK and solution rather than assuming versions.
 
 ## Test architecture
-- Use xUnit if consistent with the project plan and installed dependencies.
+- Use MSTest if consistent with the project plan and installed dependencies.
 - Use `WebApplicationFactory` for API-level/integration tests where practical.
 - Use a temporary test directory for file storage.
 - Use an isolated test database/provider. Do not let tests connect to or mutate a developer's real database or storage directory.
